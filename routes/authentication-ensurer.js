@@ -4,7 +4,8 @@ function ensure(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect('/login');
+  // リクエスト URL をクエリに入力
+  res.redirect('/login?from=' + req.originalUrl);
 }
 
 module.exports = ensure;
