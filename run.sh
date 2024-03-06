@@ -1,2 +1,3 @@
 yarn install
-PORT=$PORT yarn start
+npx webpack
+yarn start
