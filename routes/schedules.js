@@ -39,6 +39,7 @@ router.post('/', authenticationEnsurer, async (req, res, next) => {
 });
 
 router.get('/:scheduleId', authenticationEnsurer, async (req, res, next) => {
+  // バリデーション
   await param('scheduleId').isUUID('4').run(req);
   const errors = validationResult(req);
 
@@ -133,6 +134,7 @@ router.get('/:scheduleId', authenticationEnsurer, async (req, res, next) => {
 });
 
 router.get('/:scheduleId/edit', authenticationEnsurer, async (req, res, next) => {
+  // バリデーション
   await param('scheduleId').isUUID('4').run(req);
   const errors = validationResult(req);
 
@@ -170,17 +172,6 @@ function isMine(req, schedule) {
 }
 
 router.post('/:scheduleId', authenticationEnsurer, async (req, res, next) => {
-  await param('scheduleId').isUUID('4').run(req);
-  await body('scheduleName').isString().run(req);
-  await body('candidates').isString().run(req);
-  await body('memo').isString().run(req);
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    const err = new Error('URL の形式が正しくないか、入力された情報が不十分または正しくありません。');
-    err.status = 400;
-    return next(err);
-  }
 
   let schedule = await Schedule.findOne({
     where: {
@@ -189,6 +180,19 @@ router.post('/:scheduleId', authenticationEnsurer, async (req, res, next) => {
   });
   if (schedule && isMine(req, schedule)) {
     if (parseInt(req.query.edit) === 1) {
+      // バリデーション
+      await param('scheduleId').isUUID('4').run(req);
+      await body('scheduleName').isString().run(req);
+      await body('candidates').isString().run(req);
+      await body('memo').isString().run(req);
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        const err = new Error('URL の形式が正しくないか、入力された情報が不十分または正しくありません。');
+        err.status = 400;
+        return next(err);
+      }
+
       const updatedAt = new Date();
       schedule = await schedule.update({
         scheduleId: schedule.scheduleId,
@@ -205,6 +209,16 @@ router.post('/:scheduleId', authenticationEnsurer, async (req, res, next) => {
         res.redirect('/schedules/' + schedule.scheduleId);
       }
     } else if (parseInt(req.query.delete) === 1) {
+      // バリデーション
+      await param('scheduleId').isUUID('4').run(req);
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        const err = new Error('URL の形式が正しくありません。');
+        err.status = 400;
+        return next(err);
+      }
+
       await deleteScheduleAggregate(req.params.scheduleId);
       res.redirect('/');
     } else {
@@ -219,15 +233,8 @@ router.post('/:scheduleId', authenticationEnsurer, async (req, res, next) => {
   }
 });
 
+// 予定を削除する関数
 async function deleteScheduleAggregate(scheduleId) {
-  await param('scheduleId').isUUID('4').run(req);
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    const err = new Error('URL の形式が正しくありません。');
-    err.status = 400;
-    return next(err);
-  }
 
   const comments = await Comment.findAll({
     where: { scheduleId: scheduleId }
@@ -262,6 +269,7 @@ async function createCandidatesAndRedirect(candidateNames, scheduleId, res) {
   res.redirect('/schedules/' + scheduleId);
 }
 
+// 候補日程を入力欄から作成する関数
 function parseCandidateNames(req) {
   return req.body.candidates.trim().split('\n').map((s) => s.trim()).filter((s) => s !== "");
 }
